@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request
 import requests
+import os
 
 app = FastAPI()
 
-API_KEY = "YOUR_API_KEY"  # move to env var later
+API_KEY = os.getenv(EIRCODE_KEY)
 
 @app.post("/api/main")
 async def extract_and_lookup(request: Request):
