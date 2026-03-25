@@ -4,11 +4,16 @@ import os
 
 app = FastAPI()
 
-API_KEY = os.getenv(EIRCODE_KEY)
+API_KEY = os.getenv("EIRCODE_KEY")
+
+
 
 @app.post("/api/main")
 async def extract_and_lookup(request: Request):
     payload = await request.json()
+
+    if not API_KEY:
+    return {"success": False, "message": "API key not loaded"}
 
     try:
         eircode = payload["AddressDetails"]["eircode"]
