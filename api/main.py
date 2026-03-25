@@ -44,6 +44,7 @@ async def extract_and_lookup(request: Request):
         encoded_ecad = quote(ecad_id, safe="")
 
         # Step 4: second API call
+        encoded_ecad = quote(ecad_id, safe="")
         url_2 = f"https://api.ideal-postcodes.co.uk/v1/autocomplete/addresses/{encoded_ecad}/gbr"
         params_2 = {
             "api_key": API_KEY
@@ -53,11 +54,16 @@ async def extract_and_lookup(request: Request):
         response_2.raise_for_status()
         data_2 = response_2.json()
 
-        addresses = data_2.get("result", {}).get("addresses", [])
-        if not addresses:
-            return {"success": False, "message": "No address details found"}
+        result = data_2.get("result", {})
+        native = result.get("native", {})
         
-        small_area_id = addresses[0].get("small_area_id")
+        if not native:
+            return {"success": False, "message": "No native address details found"}
+        
+        small_area_id = native.get("small_area_id")
+        if not small_area_id:
+            return {"success": False, "message": "small_area_id not found"}
+                
 
     except Exception as e:
         return {"success": False, "message": str(e)}
