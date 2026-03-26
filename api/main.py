@@ -4,7 +4,6 @@ import os
 from urllib.parse import quote
 from services.small_area_lookup import get_sa2022
 
-
 app = FastAPI()
 
 API_KEY = os.getenv("EIRCODE_KEY")
@@ -16,14 +15,12 @@ async def extract_and_lookup(request: Request):
     if not API_KEY:
         return {"success": False, "message": "API key not loaded"}
 
-    # Step 1: extract eircode
     try:
         eircode = payload["AddressDetails"]["eircode"]
     except KeyError:
         return {"success": False, "message": "eircode not found"}
 
     try:
-        # Step 2: first API call (get ecad_id)
         url_1 = "https://api.ideal-postcodes.co.uk/v1/autocomplete/addresses"
         params = {
             "q": eircode,
@@ -42,46 +39,38 @@ async def extract_and_lookup(request: Request):
 
         ecad_id = hits[0]["id"]
 
-        # Step 3: encode ecad_id for URL
         encoded_ecad = quote(ecad_id, safe="")
-
-        # Step 4: second API call
         url_2 = f"https://api.ideal-postcodes.co.uk/v1/autocomplete/addresses/{encoded_ecad}/gbr"
-        params_2 = {
-            "api_key": API_KEY
-        }
 
-        response_2 = requests.get(url_2, params=params_2, timeout=10)
+        response_2 = requests.get(url_2, params={"api_key": API_KEY}, timeout=10)
         response_2.raise_for_status()
         data_2 = response_2.json()
 
         result = data_2.get("result", {})
         native = result.get("native", {})
-        
+
         if not native:
             return {"success": False, "message": "No native address details found"}
-        
+
         small_area_id = native.get("small_area_id")
         if not small_area_id:
             return {"success": False, "message": "small_area_id not found"}
-                
+
+        sa2022 = get_sa2022(small_area_id)
+        if not sa2022:
+            return {
+                "success": False,
+                "message": f"No SA2022 found for small_area_id {small_area_id}"
+            }
+
+        payload["AddressDetails"]["ecad_id"] = ecad_id
+        payload["AddressDetails"]["small_area_id"] = small_area_id
+        payload["AddressDetails"]["SA2022"] = sa2022
+
+        return {
+            "success": True,
+            "payload": payload
+        }
 
     except Exception as e:
         return {"success": False, "message": str(e)}
-
-    sa2022 = get_sa2022(small_area_id)
-
-    if not sa2022:
-        return {
-            "success": False,
-            "message": f"No SA2022 found for small_area_id {small_area_id}"
-        }
-
-    payload["AddressDetails"]["ecad_id"] = ecad_id
-    payload["AddressDetails"]["small_area_id"] = small_area_id
-    payload["AddressDetails"]["SA2022"] = sa2022
-
-    return {
-    "success": True,
-    "payload": payload
-}
