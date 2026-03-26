@@ -14,7 +14,7 @@ def load_lookup():
     lookup = {}
 
     with open(csv_path, mode="r", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter="\t")
         for row in reader:
             object_id = row["OBJECT_ID"].strip()
             sa2022 = row["SA2022"].strip()
