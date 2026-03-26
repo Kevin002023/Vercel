@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 import requests
 import os
 from urllib.parse import quote
-from services.small_area_lookup import get_sa2022
+from services.sac_lookup import get_sa2022
 
 app = FastAPI()
 
