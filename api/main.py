@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request
 import requests
 import os
 from urllib.parse import quote
+from services.small_area_lookup import get_sa2022
+
 
 app = FastAPI()
 
@@ -68,9 +70,19 @@ async def extract_and_lookup(request: Request):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
+    sa2022 = get_sa2022(small_area_id)
+
+    if not sa2022:
+        return {
+            "success": False,
+            "message": f"No SA2022 found for small_area_id {small_area_id}"
+        }
+
+    payload["AddressDetails"]["ecad_id"] = ecad_id
+    payload["AddressDetails"]["small_area_id"] = small_area_id
+    payload["AddressDetails"]["SA2022"] = sa2022
+
     return {
-        "success": True,
-        "eircode": eircode,
-        "ecad_id": ecad_id,
-        "small_area_id": small_area_id
-    }
+    "success": True,
+    "payload": payload
+}
