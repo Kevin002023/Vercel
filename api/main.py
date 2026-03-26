@@ -46,7 +46,6 @@ async def extract_and_lookup(request: Request):
         encoded_ecad = quote(ecad_id, safe="")
 
         # Step 4: second API call
-        encoded_ecad = quote(ecad_id, safe="")
         url_2 = f"https://api.ideal-postcodes.co.uk/v1/autocomplete/addresses/{encoded_ecad}/gbr"
         params_2 = {
             "api_key": API_KEY
